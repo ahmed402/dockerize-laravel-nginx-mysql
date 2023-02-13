@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+
+  backend:
+    container_name: dev_backend
+    build:
+      context: ./app/
+      target: dev
+    environment:
+      - "DB_HOST=dev_backend_db"
+      - "DB_PORT=3306"
+      - "DB_DATABASE=dev_db"
+      - "DB_USERNAME=user"
+      - "DB_PASSWORD=password"
+    depends_on:
+      - db
+    networks:
+      - internal
+  
+  db:
+    container_name: dev_backend_db
+    image: mysql:8.0.32
+    environment:
+      - "MYSQL_DATABASE=dev_db"
+      - "MYSQL_USER=user"
+      - "MYSQL_PASSWORD=password"
+      - "MYSQL_ROOT_PASSWORD=root_password"
+    volumes:
+      - /docker/app_db/dev:/var/lib/mysql
+    networks:
+      - internal
+
+  nginx:
+    container_name: dev_backend_nginx
+    build: 
+      context: ./nginx
+    ports:
+      - 8082:8080
+    depends_on:
+      - backend
+    networks:
+      - internal
+      - external
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8083:8080
+    networks:
+      - external
+      - internal
+
+
+networks:
+  internal:
+    name: dev_app_internal_network
+    driver: bridge
+
+  external:
+    name: dev_app_network

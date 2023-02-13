@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  prod_backend:
+    container_name: backend
+    build:
+      context: ./app/
+      target: prod
+    environment:
+      - "DB_HOST=prod_backend_db"
+      - "DB_PORT=3306"
+      - "DB_DATABASE=prod_db"
+      - "DB_USERNAME=user"
+      - "DB_PASSWORD=password"
+    depends_on:
+      - prod_db
+    networks:
+      - internal
+  
+  prod_db:
+    container_name: prod_backend_db
+    image: mysql:8.0.32
+    environment:
+      - "MYSQL_DATABASE=prod_db"
+      - "MYSQL_USER=user"
+      - "MYSQL_PASSWORD=password"
+      - "MYSQL_ROOT_PASSWORD=root_password"
+    volumes:
+      - /docker/app_db/prod:/var/lib/mysql
+    networks:
+      - internal
+
+  prod_nginx:
+    container_name: prod_backend_nginx
+    build: 
+      context: ./nginx
+    ports:
+      - 8081:8080
+    depends_on:
+      - prod_backend
+    networks:
+      - internal
+      - external
+
+
+
+
+networks:
+  internal:
+    name: prod_app_internal_network
+    driver: bridge
+
+  external:
+    name: prod_app_network
